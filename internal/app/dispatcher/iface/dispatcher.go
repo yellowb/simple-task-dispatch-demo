@@ -16,7 +16,7 @@ type Dispatcher interface {
 	// StatusStorage 注入内部状态存储器到Dispatcher
 	StatusStorage(storage *StatusStorage) Dispatcher
 	// TaskDatasource 注入Task数据源到Dispatcher
-	TaskProvider(provider *TaskDatasource) Dispatcher
+	TaskDatasource(datasource *TaskDatasource) Dispatcher
 
 	/* 下面这些是改变Dispatcher中被调度Task的接口 */
 

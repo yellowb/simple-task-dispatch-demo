@@ -26,7 +26,7 @@ func (d *DemoDispatcher) StatusStorage(storage *iface.StatusStorage) iface.Dispa
 	panic("implement me")
 }
 
-func (d *DemoDispatcher) TaskProvider(provider *iface.TaskDatasource) iface.Dispatcher {
+func (d *DemoDispatcher) TaskDatasource(datasource *iface.TaskDatasource) iface.Dispatcher {
 	//TODO implement me
 	panic("implement me")
 }
