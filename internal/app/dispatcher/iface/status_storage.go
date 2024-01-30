@@ -4,8 +4,8 @@ import "github.com/yellowb/simple-task-dispatch-demo/internal/app/dispatcher/mod
 
 // StatusStorage Dispatcher内部状态存储器接口
 type StatusStorage interface {
-	// UpsertRunningTaskStatus 更新某一个Task的运行时状态
-	UpsertRunningTaskStatus(taskKey string, taskStatus *model.RunningTaskStatus) error
+	// PutRunningTaskStatus 更新某一个Task的运行时状态
+	PutRunningTaskStatus(taskKey string, taskStatus *model.RunningTaskStatus) error
 	// DeleteRunningTaskStatus 删除某一个Task的运行时状态
 	DeleteRunningTaskStatus(taskKey string) error
 	// GetRunningTaskStatus 获取某一个Task的运行时状态
@@ -14,4 +14,6 @@ type StatusStorage interface {
 	GetDispatcherStatus() (model.DispatcherStatus, error)
 	// Clear 清空Dispatcher内部状态数据
 	Clear() error
+	// Size 当前Task数量
+	Size() int
 }
