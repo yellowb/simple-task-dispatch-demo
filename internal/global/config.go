@@ -5,8 +5,8 @@ type DispatcherConfig struct {
 	// TODO：redis configs
 }
 
-// ConsumerConfig 消费者进程启动配置
-type ConsumerConfig struct {
-	// 每一个Consumer节点启动多少个go routine用于处理Task
-	ConsumerPoolSize int
+// WorkerConfig 消费者进程启动配置
+type WorkerConfig struct {
+	// 每一个Worker节点启动多少个go routine用于处理Task
+	WorkerPoolSize int
 }
