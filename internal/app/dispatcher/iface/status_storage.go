@@ -11,7 +11,7 @@ type StatusStorage interface {
 	// GetRunningTaskStatus 获取某一个Task的运行时状态
 	GetRunningTaskStatus(taskKey string) (*model.RunningTaskStatus, error)
 	// GetDispatcherStatus 获取Dispatcher完整运行时状态
-	GetDispatcherStatus() (model.DispatcherStatus, error)
+	GetDispatcherStatus() (*model.DispatcherStatus, error)
 	// Clear 清空Dispatcher内部状态数据
 	Clear() error
 	// Size 当前Task数量

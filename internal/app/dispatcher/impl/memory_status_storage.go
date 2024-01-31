@@ -12,31 +12,50 @@ type MemoryStatusStorage struct {
 }
 
 func (m *MemoryStatusStorage) PutRunningTaskStatus(taskKey string, taskStatus *model.RunningTaskStatus) error {
-	//TODO implement me
-	panic("implement me")
+	m.taskMap.Store(taskKey, taskStatus)
+	return nil
 }
 
 func (m *MemoryStatusStorage) DeleteRunningTaskStatus(taskKey string) error {
-	//TODO implement me
-	panic("implement me")
+	m.taskMap.Delete(taskKey)
+	return nil
 }
 
 func (m *MemoryStatusStorage) GetRunningTaskStatus(taskKey string) (*model.RunningTaskStatus, error) {
-	//TODO implement me
-	panic("implement me")
+	value, ok := m.taskMap.Load(taskKey)
+	if !ok {
+		return nil, nil
+	}
+	return value.(*model.RunningTaskStatus), nil
 }
 
-func (m *MemoryStatusStorage) GetDispatcherStatus() (model.DispatcherStatus, error) {
-	//TODO implement me
-	panic("implement me")
+func (m *MemoryStatusStorage) GetDispatcherStatus() (*model.DispatcherStatus, error) {
+	data := make(map[string]*model.RunningTaskStatus)
+	m.taskMap.Range(func(key, value any) bool {
+		data[key.(string)] = value.(*model.RunningTaskStatus)
+		return true
+	})
+	return &model.DispatcherStatus{
+		RunningTaskCount:    len(data),
+		RunningTaskStatuses: data,
+	}, nil
 }
 
 func (m *MemoryStatusStorage) Clear() error {
-	//TODO implement me
-	panic("implement me")
+	m.taskMap.Range(func(key, value any) bool {
+		m.taskMap.Delete(key)
+		return true
+	})
+	return nil
 }
 
 func (m *MemoryStatusStorage) Size() int {
-	//TODO implement me
-	panic("implement me")
+	counter := 0
+	// 因为sync.Map没有接口可以获取当前Size，这里用了一种效率较低的方式循环迭代每一个key来统计个数
+	// 一开始考虑使用一个外置的atomic.Int32作为Size counter，但是发现这种做法在Put/Delete的场景下会有并发问题，于是舍弃
+	m.taskMap.Range(func(key, value any) bool {
+		counter++
+		return true
+	})
+	return counter
 }
