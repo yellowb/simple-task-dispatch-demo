@@ -14,12 +14,14 @@ import (
 func main() {
 	// 配置信息，生产环境应该从环境变量读取，这里写死
 	cfg := &global.DispatcherConfig{
+		// Redis地址密码等
 		RedisCfg: global.RedisCfg{
 			Addr:     "localhost",
 			Port:     "6379",
 			Password: "",
 			Db:       0,
 		},
+		// Redis Queue的名称
 		QueueName: "mq",
 	}
 
