@@ -12,33 +12,33 @@ type DemoDispatcher struct {
 	// Dispatcher配置
 	cfg *global.DispatcherConfig
 
-	// Dispatcher的依赖组建
-	deliverier     *iface.Deliverier
-	statusStorage  *iface.StatusStorage
-	taskDatasource *iface.TaskDatasource
+	// Dispatcher的依赖组件
+	deliverier     *iface.Deliverier     // Job投递渠道
+	statusStorage  *iface.StatusStorage  // Dispatcher状态存储器
+	taskDatasource *iface.TaskDatasource // Task数据源
 
 	// 第三方定时调度库
 	scheduler *gocron.Scheduler
 }
 
 func (d *DemoDispatcher) Config(cfg *global.DispatcherConfig) iface.Dispatcher {
-	//TODO implement me
-	panic("implement me")
+	d.cfg = cfg
+	return d
 }
 
 func (d *DemoDispatcher) Deliverier(deliverier *iface.Deliverier) iface.Dispatcher {
-	//TODO implement me
-	panic("implement me")
+	d.deliverier = deliverier
+	return d
 }
 
 func (d *DemoDispatcher) StatusStorage(storage *iface.StatusStorage) iface.Dispatcher {
-	//TODO implement me
-	panic("implement me")
+	d.statusStorage = storage
+	return d
 }
 
 func (d *DemoDispatcher) TaskDatasource(datasource *iface.TaskDatasource) iface.Dispatcher {
-	//TODO implement me
-	panic("implement me")
+	d.taskDatasource = datasource
+	return d
 }
 
 func (d *DemoDispatcher) Add(tasks ...*model.Task) error {
