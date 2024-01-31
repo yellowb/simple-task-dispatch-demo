@@ -1,6 +1,7 @@
 package impl
 
 import (
+	"github.com/go-co-op/gocron/v2"
 	"github.com/yellowb/simple-task-dispatch-demo/internal/app/dispatcher/iface"
 	"github.com/yellowb/simple-task-dispatch-demo/internal/app/dispatcher/model"
 	"github.com/yellowb/simple-task-dispatch-demo/internal/global"
@@ -8,7 +9,16 @@ import (
 
 // DemoDispatcher 一个作为Demo的Dispatcher实现
 type DemoDispatcher struct {
-	// TODO：一些字段
+	// Dispatcher配置
+	cfg *global.DispatcherConfig
+
+	// Dispatcher的依赖组建
+	deliverier     *iface.Deliverier
+	statusStorage  *iface.StatusStorage
+	taskDatasource *iface.TaskDatasource
+
+	// 第三方定时调度库
+	scheduler *gocron.Scheduler
 }
 
 func (d *DemoDispatcher) Config(cfg *global.DispatcherConfig) iface.Dispatcher {
