@@ -11,19 +11,23 @@ type FakeTaskDatasource struct {
 	// 正常的实现应该要包含DAO从DB中获取数据
 }
 
+func NewFakeTaskDatasource() *FakeTaskDatasource {
+	return &FakeTaskDatasource{}
+}
+
 func (p *FakeTaskDatasource) GetAllTasks() ([]*model.Task, error) {
 	return []*model.Task{
+		&model.Task{
+			Name:        "task-5s",
+			Key:         "task-5s",
+			TaskType:    constants.TaskTypeDuration,
+			DurationDef: &model.DurationDefinition{Duration: 5 * time.Second},
+		},
 		&model.Task{
 			Name:        "task-10s",
 			Key:         "task-10s",
 			TaskType:    constants.TaskTypeDuration,
 			DurationDef: &model.DurationDefinition{Duration: 10 * time.Second},
-		},
-		&model.Task{
-			Name:        "task-20s",
-			Key:         "task-20s",
-			TaskType:    constants.TaskTypeDuration,
-			DurationDef: &model.DurationDefinition{Duration: 20 * time.Second},
 		},
 	}, nil
 }

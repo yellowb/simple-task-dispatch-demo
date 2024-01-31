@@ -21,7 +21,7 @@ type DemoDispatcher struct {
 	cfg *global.DispatcherConfig
 
 	// Dispatcher的依赖组件
-	deliverier     iface.Deliverier     // Job投递渠道
+	deliverier     iface.Deliverier     // Job投递者
 	statusStorage  iface.StatusStorage  // Dispatcher状态存储器
 	taskDatasource iface.TaskDatasource // Task数据源
 
@@ -164,12 +164,20 @@ func (d *DemoDispatcher) Reload() error {
 
 // Run 让Dispatcher开始调度任务
 func (d *DemoDispatcher) Run() error {
+	d.lock.Lock()
+	defer d.lock.Unlock()
+
 	d.scheduler.Start()
+	d.status = constants.Running
 	return nil
 }
 
 // Shutdown 关闭Dispatcher
 func (d *DemoDispatcher) Shutdown() error {
+	d.lock.Lock()
+	defer d.lock.Unlock()
+
+	d.status = constants.Shutdown
 	return d.scheduler.Shutdown()
 }
 
@@ -234,5 +242,6 @@ func (d *DemoDispatcher) taskFunc(task *model.Task) func() {
 		if err != nil {
 			log.Printf("deliver job error : %v", err)
 		}
+		log.Printf("delivered job : [%s]", task.Key)
 	}
 }

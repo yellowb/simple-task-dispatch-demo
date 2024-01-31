@@ -25,12 +25,11 @@ func (r *RedisQueueDeliverier) Len() (int64, error) {
 	return r.redisCli.LLen(context.Background(), r.queueName).Result()
 }
 
-func NewRedisQueueDeliverier(addr, port, password string, db, protocol int, queueName string) (*RedisQueueDeliverier, error) {
+func NewRedisQueueDeliverier(addr, port, password string, db int, queueName string) (*RedisQueueDeliverier, error) {
 	cli := redis.NewClient(&redis.Options{
 		Addr:     fmt.Sprintf("%s:%s", addr, port),
 		Password: password,
 		DB:       db,
-		Protocol: protocol,
 	})
 	_, err := cli.Ping(context.Background()).Result()
 	if err != nil {

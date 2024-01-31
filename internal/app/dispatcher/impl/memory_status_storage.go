@@ -11,6 +11,12 @@ type MemoryStatusStorage struct {
 	taskMap sync.Map
 }
 
+func NewMemoryStatusStorage() *MemoryStatusStorage {
+	return &MemoryStatusStorage{
+		taskMap: sync.Map{},
+	}
+}
+
 func (m *MemoryStatusStorage) PutRunningTaskStatus(taskKey string, taskStatus *model.RunningTaskStatus) error {
 	m.taskMap.Store(taskKey, taskStatus)
 	return nil

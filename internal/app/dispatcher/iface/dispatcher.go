@@ -20,6 +20,8 @@ type Dispatcher interface {
 
 	/* 下面这些是改变Dispatcher中被调度Task的接口 */
 
+	// Init 初始化Dispatcher
+	Init() error
 	// Add 往Dispatcher中增加Task
 	Add(task *model.Task) error
 	// Remove 移除Dispatcher中已有的Task
