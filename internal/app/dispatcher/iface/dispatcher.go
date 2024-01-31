@@ -12,25 +12,25 @@ type Dispatcher interface {
 	// Config 注入配置到Dispatcher
 	Config(cfg *global.DispatcherConfig) Dispatcher
 	// Deliverier 注入Job投递器到Dispatcher
-	Deliverier(deliverier *Deliverier) Dispatcher
+	Deliverier(deliverier Deliverier) Dispatcher
 	// StatusStorage 注入内部状态存储器到Dispatcher
-	StatusStorage(storage *StatusStorage) Dispatcher
+	StatusStorage(storage StatusStorage) Dispatcher
 	// TaskDatasource 注入Task数据源到Dispatcher
-	TaskDatasource(datasource *TaskDatasource) Dispatcher
+	TaskDatasource(datasource TaskDatasource) Dispatcher
 
 	/* 下面这些是改变Dispatcher中被调度Task的接口 */
 
 	// Add 往Dispatcher中增加Task
-	Add(tasks ...*model.Task) error
+	Add(task *model.Task) error
 	// Remove 移除Dispatcher中已有的Task
-	Remove(taskKeys ...string) error
-	// Refresh 刷新一遍所有要调度的Task
-	Refresh() error
+	Remove(taskKey string) error
+	// Reload 重新加载所有要调度的Task
+	Reload() error
 
 	/* 下面这些是影响Dispatcher运行状态的接口 */
 
 	// Run 启动Dispatcher
 	Run() error
-	// Stop 停止Dispatcher
-	Stop() error
+	// Shutdown 终止Dispatcher
+	Shutdown() error
 }

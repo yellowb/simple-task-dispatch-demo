@@ -1,6 +1,10 @@
 package model
 
-import "time"
+import (
+	"github.com/go-co-op/gocron/v2"
+	"github.com/yellowb/simple-task-dispatch-demo/internal/constants"
+	"time"
+)
 
 // Task 代表配置好的任务（静态）
 type Task struct {
@@ -23,4 +27,35 @@ type DailyDefinition struct {
 	Hour   uint
 	Minute uint
 	Second uint
+}
+
+// GenerateJob 根据Task产生一个Job实例
+func (t *Task) GenerateJob(jobUid string, dispatchedTime int64) *Job {
+	return &Job{
+		JobUid:         jobUid,
+		TaskName:       t.Name,
+		TaskKey:        t.Key,
+		DispatchedTime: dispatchedTime,
+		Args: map[string]interface{}{
+			// fake
+			"arg1": "YB",
+			"arg2": 999,
+		},
+	}
+}
+
+// ToGocronJobDefinition 根据Task转换成gocron的JobDefinition
+func (t *Task) ToGocronJobDefinition() gocron.JobDefinition {
+	if t.TaskType == constants.TaskTypeDuration {
+		// 固定间隔任务
+		return gocron.DurationJob(t.DurationDef.Duration)
+	} else {
+		// 每日定时任务
+		return gocron.DailyJob(
+			1,
+			gocron.NewAtTimes(
+				gocron.NewAtTime(t.DailyDef.Hour, t.DailyDef.Minute, t.DailyDef.Second),
+			),
+		)
+	}
 }

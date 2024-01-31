@@ -1,10 +1,18 @@
 package impl
 
 import (
+	"errors"
+	"fmt"
 	"github.com/go-co-op/gocron/v2"
+	"github.com/google/uuid"
 	"github.com/yellowb/simple-task-dispatch-demo/internal/app/dispatcher/iface"
 	"github.com/yellowb/simple-task-dispatch-demo/internal/app/dispatcher/model"
+	"github.com/yellowb/simple-task-dispatch-demo/internal/constants"
 	"github.com/yellowb/simple-task-dispatch-demo/internal/global"
+	"log"
+	"strings"
+	"sync"
+	"time"
 )
 
 // DemoDispatcher 一个作为Demo的Dispatcher实现
@@ -13,12 +21,23 @@ type DemoDispatcher struct {
 	cfg *global.DispatcherConfig
 
 	// Dispatcher的依赖组件
-	deliverier     *iface.Deliverier     // Job投递渠道
-	statusStorage  *iface.StatusStorage  // Dispatcher状态存储器
-	taskDatasource *iface.TaskDatasource // Task数据源
+	deliverier     iface.Deliverier     // Job投递渠道
+	statusStorage  iface.StatusStorage  // Dispatcher状态存储器
+	taskDatasource iface.TaskDatasource // Task数据源
 
-	// 第三方定时调度库
-	scheduler *gocron.Scheduler
+	// 第三方调度器
+	scheduler gocron.Scheduler
+
+	// Dispatcher其它内部属性
+	status constants.DispatcherStatus // Dispatcher状态
+	lock   sync.Mutex
+}
+
+func NewDemoDispatcher() *DemoDispatcher {
+	return &DemoDispatcher{
+		status: constants.New,
+		lock:   sync.Mutex{},
+	}
 }
 
 func (d *DemoDispatcher) Config(cfg *global.DispatcherConfig) iface.Dispatcher {
@@ -26,42 +45,194 @@ func (d *DemoDispatcher) Config(cfg *global.DispatcherConfig) iface.Dispatcher {
 	return d
 }
 
-func (d *DemoDispatcher) Deliverier(deliverier *iface.Deliverier) iface.Dispatcher {
+func (d *DemoDispatcher) Deliverier(deliverier iface.Deliverier) iface.Dispatcher {
 	d.deliverier = deliverier
 	return d
 }
 
-func (d *DemoDispatcher) StatusStorage(storage *iface.StatusStorage) iface.Dispatcher {
+func (d *DemoDispatcher) StatusStorage(storage iface.StatusStorage) iface.Dispatcher {
 	d.statusStorage = storage
 	return d
 }
 
-func (d *DemoDispatcher) TaskDatasource(datasource *iface.TaskDatasource) iface.Dispatcher {
+func (d *DemoDispatcher) TaskDatasource(datasource iface.TaskDatasource) iface.Dispatcher {
 	d.taskDatasource = datasource
 	return d
 }
 
-func (d *DemoDispatcher) Add(tasks ...*model.Task) error {
-	//TODO implement me
-	panic("implement me")
+// Init 初始化Dispatcher
+func (d *DemoDispatcher) Init() error {
+	d.lock.Lock()
+	defer d.lock.Unlock()
+
+	// 禁止重复初始化
+	err := d.checkStatus(constants.New)
+	if err != nil {
+		return err
+	}
+
+	// 简单检查一下各个依赖是否为空即可
+	if d.cfg == nil {
+		return errors.New("config is nil")
+	}
+	if d.deliverier == nil {
+		return errors.New("deliverier is nil")
+	}
+	if d.statusStorage == nil {
+		return errors.New("status storage is nil")
+	}
+	if d.taskDatasource == nil {
+		return errors.New("task datasource is nil")
+	}
+
+	// 创建一个gocron scheduler
+	scheduler, err := gocron.NewScheduler()
+	if err != nil {
+		return err
+	}
+
+	d.scheduler = scheduler
+
+	d.status = constants.Initialized
+	return nil
 }
 
-func (d *DemoDispatcher) Remove(taskKeys ...string) error {
-	//TODO implement me
-	panic("implement me")
+// Add 往Dispatcher中增加一个Task
+func (d *DemoDispatcher) Add(task *model.Task) error {
+	d.lock.Lock()
+	defer d.lock.Unlock()
+
+	err := d.checkStatus(constants.Initialized, constants.Running)
+	if err != nil {
+		return err
+	}
+
+	// 往scheduler中添加一个调度任务
+	_, err = d.addToScheduler(task)
+
+	return err
 }
 
-func (d *DemoDispatcher) Refresh() error {
-	//TODO implement me
-	panic("implement me")
+// Remove 根据taskKey把对应Task移除
+func (d *DemoDispatcher) Remove(taskKey string) error {
+	d.lock.Lock()
+	defer d.lock.Unlock()
+
+	err := d.checkStatus(constants.Initialized, constants.Running)
+	if err != nil {
+		return err
+	}
+
+	// 由于Add方法中已经把TaskKey作为调度任务的tag，所以可以简单通过RemoveByTags函数删除
+	d.scheduler.RemoveByTags(taskKey)
+	return nil
 }
 
+// Reload 重新加载Dispatcher中的所有Task
+func (d *DemoDispatcher) Reload() error {
+	d.lock.Lock()
+	defer d.lock.Unlock()
+
+	err := d.checkStatus(constants.Initialized, constants.Running)
+	if err != nil {
+		return err
+	}
+
+	// 先从数据源获取所有最新的Task
+	tasks, err := d.loadLatestTasks()
+	if err != nil {
+		return fmt.Errorf("load tasks from datasource error : %v", err)
+	}
+
+	// 把scheduler中所有调度任务删除
+	err = d.clearScheduler()
+	if err != nil {
+		return fmt.Errorf("clear jobs from scheduler error : %v", err)
+	}
+
+	// 把从数据源获取的Task全量加回去scheduler
+	for _, task := range tasks {
+		_, err = d.addToScheduler(task)
+		// 这里其实有点问题，如果前面N个Task成功，第N+1个Task出错，则前面N个也不会回滚，也就是不保证批量增加Job的原子性，但好像也没有别的好办法
+		if err != nil {
+			return fmt.Errorf("create new job in scheduler error : %v", err)
+		}
+	}
+
+	return nil
+}
+
+// Run 让Dispatcher开始调度任务
 func (d *DemoDispatcher) Run() error {
-	//TODO implement me
-	panic("implement me")
+	d.scheduler.Start()
+	return nil
 }
 
-func (d *DemoDispatcher) Stop() error {
-	//TODO implement me
-	panic("implement me")
+// Shutdown 关闭Dispatcher
+func (d *DemoDispatcher) Shutdown() error {
+	return d.scheduler.Shutdown()
+}
+
+// 检查当前Dispatcher的状态是否在给定的statusList集合中
+func (d *DemoDispatcher) checkStatus(statusList ...constants.DispatcherStatus) error {
+	for _, status := range statusList {
+		if d.status == status {
+			return nil
+		}
+	}
+
+	// 构造错误信息
+	statusStrList := make([]string, 0, len(statusList))
+	for _, status := range statusList {
+		statusStrList = append(statusStrList, status.String())
+	}
+	return fmt.Errorf("dispatcher status must be in %s, current status: %s", strings.Join(statusStrList, "/"), d.status.String())
+}
+
+// 从Task数据源获取所有最新的Task
+func (d *DemoDispatcher) loadLatestTasks() ([]*model.Task, error) {
+	return d.taskDatasource.GetAllTasks()
+}
+
+// 把一个Task作为调度任务添加进scheduler
+func (d *DemoDispatcher) addToScheduler(task *model.Task) (gocron.Job, error) {
+	return d.scheduler.NewJob(
+		// 调度类型
+		task.ToGocronJobDefinition(),
+		// 都是同一个处理函数，只是闭包中的参数不一样
+		gocron.NewTask(
+			d.taskFunc(task),
+		),
+		// 把Task的key作为tag附加在这个调度任务上，方便后续根据TaskKey删除调度任务
+		gocron.WithTags(task.Key),
+	)
+}
+
+// 清空scheduler中所有调度任务
+func (d *DemoDispatcher) clearScheduler() error {
+	gocronJobs := d.scheduler.Jobs()
+
+	// 迭代每一个调度任务的UUID删除
+	for _, gocronJob := range gocronJobs {
+		err := d.scheduler.RemoveJob(gocronJob.ID())
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// 返回一个用于被scheduler调度的闭包函数，由于Dispatcher的需求都是往Queue投递消息，所以只有一种被调度的函数
+func (d *DemoDispatcher) taskFunc(task *model.Task) func() {
+	return func() {
+		// 根据Task内容生成Job对象
+		job := task.GenerateJob(uuid.NewString(), time.Now().Unix())
+
+		// 通过deliverier投递job
+		err := d.deliverier.Deliver(job)
+		if err != nil {
+			log.Printf("deliver job error : %v", err)
+		}
+	}
 }
