@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/redis/go-redis/v9"
 	"github.com/yellowb/simple-task-dispatch-demo/internal/app/dispatcher/model"
+	"time"
 )
 
 // RedisQueueDeliverier 对接Redis List的Job投递器实现
@@ -27,9 +28,10 @@ func (r *RedisQueueDeliverier) Len() (int64, error) {
 
 func NewRedisQueueDeliverier(addr, port, password string, db int, queueName string) (*RedisQueueDeliverier, error) {
 	cli := redis.NewClient(&redis.Options{
-		Addr:     fmt.Sprintf("%s:%s", addr, port),
-		Password: password,
-		DB:       db,
+		Addr:        fmt.Sprintf("%s:%s", addr, port),
+		Password:    password,
+		DB:          db,
+		ReadTimeout: 10 * time.Second, // go-redis默认值为3s, 可能在BRPOP中堵塞超时设置稍微大一点就会有问题，所以调大它
 	})
 	_, err := cli.Ping(context.Background()).Result()
 	if err != nil {
