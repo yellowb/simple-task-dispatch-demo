@@ -36,6 +36,7 @@ func (t *Task) GenerateJob(jobUid string, dispatchedTime, seq int64) *Job {
 		JobUid:         jobUid,
 		TaskName:       t.Name,
 		TaskKey:        t.Key,
+		HandlerKey:     t.Key, // 现在简单的等于taskKey, 但是对于云厂同步任务来说, 不能直接取taskKey, 因为多个不同的TaskKey可能对应同一种逻辑Handler(云厂+资源类型 -> 一种Handler)
 		DispatchedTime: dispatchedTime,
 		Seq:            seq,
 		Args: map[string]interface{}{
