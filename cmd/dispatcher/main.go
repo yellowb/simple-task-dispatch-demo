@@ -58,4 +58,5 @@ func main() {
 	}
 
 	// TODO: 还需要监听os事件调用dispatcher.Shutdown()来退出
+
 }
