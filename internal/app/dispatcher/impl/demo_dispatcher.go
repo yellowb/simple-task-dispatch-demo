@@ -167,6 +167,11 @@ func (d *DemoDispatcher) Run() error {
 	d.lock.Lock()
 	defer d.lock.Unlock()
 
+	err := d.checkStatus(constants.Initialized)
+	if err != nil {
+		return err
+	}
+
 	d.scheduler.Start()
 	d.status = constants.Running
 	return nil
@@ -176,6 +181,11 @@ func (d *DemoDispatcher) Run() error {
 func (d *DemoDispatcher) Shutdown() error {
 	d.lock.Lock()
 	defer d.lock.Unlock()
+
+	err := d.checkStatus(constants.Running)
+	if err != nil {
+		return err
+	}
 
 	d.status = constants.Shutdown
 	return d.scheduler.Shutdown()
