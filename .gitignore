@@ -8,3 +8,4 @@ cmd/resource_center/resource_center
 cmd/user_center/user_center
 cmd/org/org
 workspace.code-workspace
+dump.rdb
