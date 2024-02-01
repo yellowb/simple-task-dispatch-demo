@@ -57,5 +57,5 @@ func main() {
 	case <-time.After(24 * time.Hour):
 	}
 
-	// TODO: 还需要监听os事件调用dispatcher.Shutdown()来退出
+	// TODO: 还需要监听os事件调用dispatcher.Shutdown()来退出, 还有断开数据库链接之类。。。
 }
