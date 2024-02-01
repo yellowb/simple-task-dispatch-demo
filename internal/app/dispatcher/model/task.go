@@ -3,6 +3,7 @@ package model
 import (
 	"github.com/go-co-op/gocron/v2"
 	"github.com/yellowb/simple-task-dispatch-demo/internal/constants"
+	"sync/atomic"
 	"time"
 )
 
@@ -66,6 +67,6 @@ func (t *Task) ToRunningTaskStatus() *RunningTaskStatus {
 	return &RunningTaskStatus{
 		TaskName: t.Name,
 		TaskKey:  t.Key,
-		Seq:      0, // 一个新的RunningTaskStatus的Seq从0开始
+		Seq:      atomic.Int64{}, // 一个新的RunningTaskStatus的Seq从0开始
 	}
 }

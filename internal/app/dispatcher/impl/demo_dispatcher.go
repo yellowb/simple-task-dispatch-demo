@@ -281,7 +281,7 @@ func (d *DemoDispatcher) updateRunningTaskStatus(taskKey string) (*model.Running
 	}
 
 	// 下面是更新逻辑，当前只需要自增Seq。有更复杂的逻辑可以加到下面。
-	taskStatus.Seq++
+	taskStatus.Seq.Add(1)
 	return taskStatus, nil
 }
 
@@ -295,7 +295,7 @@ func (d *DemoDispatcher) taskFunc(task *model.Task) func() {
 		}
 
 		// 根据Task内容生成Job对象
-		job := task.GenerateJob(uuid.NewString(), time.Now().Unix(), taskStatus.Seq)
+		job := task.GenerateJob(uuid.NewString(), time.Now().Unix(), taskStatus.Seq.Load())
 
 		// 通过deliverier投递job
 		err = d.deliverier.Deliver(job)
