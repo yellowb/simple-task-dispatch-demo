@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/go-co-op/gocron/v2"
 	"github.com/google/uuid"
+	"github.com/yellowb/simple-task-dispatch-demo/internal/app/dispatcher/error_types"
 	"github.com/yellowb/simple-task-dispatch-demo/internal/app/dispatcher/iface"
 	"github.com/yellowb/simple-task-dispatch-demo/internal/app/dispatcher/model"
 	"github.com/yellowb/simple-task-dispatch-demo/internal/constants"
@@ -123,9 +124,7 @@ func (d *DemoDispatcher) Remove(taskKey string) error {
 		return err
 	}
 
-	// 由于Add方法中已经把TaskKey作为调度任务的tag，所以可以简单通过RemoveByTags函数删除
-	d.scheduler.RemoveByTags(taskKey)
-	return nil
+	return d.removeFromScheduler(taskKey)
 }
 
 // Reload 重新加载Dispatcher中的所有Task
@@ -144,7 +143,7 @@ func (d *DemoDispatcher) Reload() error {
 		return fmt.Errorf("load tasks from datasource error : %v", err)
 	}
 
-	// 把scheduler中所有调度任务删除
+	// 把scheduler中所有调度任务删除、清空状态存储器
 	err = d.clearScheduler()
 	if err != nil {
 		return fmt.Errorf("clear jobs from scheduler error : %v", err)
@@ -214,7 +213,16 @@ func (d *DemoDispatcher) loadLatestTasks() ([]*model.Task, error) {
 
 // 把一个Task作为调度任务添加进scheduler
 func (d *DemoDispatcher) addToScheduler(task *model.Task) (gocron.Job, error) {
-	return d.scheduler.NewJob(
+	// 不能重复添加TaskKey相同的Task
+	ok, err := d.statusStorage.ExistRunningTaskStatus(task.Key)
+	if err != nil {
+		return nil, fmt.Errorf("check exist running task error : %v", err)
+	}
+	if ok {
+		return nil, error_types.ErrTaskAlreadyExist
+	}
+
+	gocronJob, err := d.scheduler.NewJob(
 		// 调度类型
 		task.ToGocronJobDefinition(),
 		// 都是同一个处理函数，只是闭包中的参数不一样
@@ -224,12 +232,31 @@ func (d *DemoDispatcher) addToScheduler(task *model.Task) (gocron.Job, error) {
 		// 把Task的key作为tag附加在这个调度任务上，方便后续根据TaskKey删除调度任务
 		gocron.WithTags(task.Key),
 	)
+	if err != nil {
+		return nil, err
+	}
+
+	// 添加这个Task进状态存储器进行跟踪
+	err = d.statusStorage.PutRunningTaskStatus(task.Key, task.ToRunningTaskStatus())
+	if err != nil {
+		return nil, err
+	}
+
+	return gocronJob, nil
 }
 
-// 清空scheduler中所有调度任务
-func (d *DemoDispatcher) clearScheduler() error {
-	gocronJobs := d.scheduler.Jobs()
+// 根据TaskKey从scheduler删除一个调度任务
+func (d *DemoDispatcher) removeFromScheduler(taskKey string) error {
+	// 由于addToScheduler方法中已经把TaskKey作为调度任务的tag，所以可以简单通过RemoveByTags函数删除
+	d.scheduler.RemoveByTags(taskKey)
+	// 从状态存储器删除这个Task的跟踪状态
+	return d.statusStorage.DeleteRunningTaskStatus(taskKey)
+}
 
+// 清空scheduler中所有调度任务、清空状态存储器
+func (d *DemoDispatcher) clearScheduler() error {
+	// 删除scheduler中所有调度任务
+	gocronJobs := d.scheduler.Jobs()
 	// 迭代每一个调度任务的UUID删除
 	for _, gocronJob := range gocronJobs {
 		err := d.scheduler.RemoveJob(gocronJob.ID())
@@ -238,17 +265,40 @@ func (d *DemoDispatcher) clearScheduler() error {
 		}
 	}
 
-	return nil
+	// 清空状态存储器
+	err := d.statusStorage.Clear()
+	return err
+}
+
+// 更新taskKey对应的Task的运行时状态。本方法会返回最新的RunningTaskStatus对象。
+func (d *DemoDispatcher) updateRunningTaskStatus(taskKey string) (*model.RunningTaskStatus, error) {
+	taskStatus, err := d.statusStorage.GetRunningTaskStatus(taskKey)
+	if err != nil {
+		return nil, err
+	}
+	if taskStatus == nil {
+		return nil, fmt.Errorf("task [%s] is not existed", taskKey)
+	}
+
+	// 下面是更新逻辑，当前只需要自增Seq。有更复杂的逻辑可以加到下面。
+	taskStatus.Seq++
+	return taskStatus, nil
 }
 
 // 返回一个用于被scheduler调度的闭包函数，由于Dispatcher的需求都是往Queue投递消息，所以只有一种被调度的函数
 func (d *DemoDispatcher) taskFunc(task *model.Task) func() {
 	return func() {
+		// 每次分派一个Task，都更新状态存储器中对应的RunningTaskStatus条目
+		taskStatus, err := d.updateRunningTaskStatus(task.Key)
+		if err != nil {
+			log.Printf("update running task status error : %v", err)
+		}
+
 		// 根据Task内容生成Job对象
-		job := task.GenerateJob(uuid.NewString(), time.Now().Unix())
+		job := task.GenerateJob(uuid.NewString(), time.Now().Unix(), taskStatus.Seq)
 
 		// 通过deliverier投递job
-		err := d.deliverier.Deliver(job)
+		err = d.deliverier.Deliver(job)
 		if err != nil {
 			log.Printf("deliver job error : %v", err)
 		}

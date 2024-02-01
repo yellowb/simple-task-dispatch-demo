@@ -35,6 +35,11 @@ func (m *MemoryStatusStorage) GetRunningTaskStatus(taskKey string) (*model.Runni
 	return value.(*model.RunningTaskStatus), nil
 }
 
+func (m *MemoryStatusStorage) ExistRunningTaskStatus(taskKey string) (bool, error) {
+	_, ok := m.taskMap.Load(taskKey)
+	return ok, nil
+}
+
 func (m *MemoryStatusStorage) GetDispatcherStatus() (*model.DispatcherStatus, error) {
 	data := make(map[string]*model.RunningTaskStatus)
 	m.taskMap.Range(func(key, value any) bool {

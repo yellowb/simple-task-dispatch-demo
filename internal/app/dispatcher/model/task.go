@@ -30,12 +30,13 @@ type DailyDefinition struct {
 }
 
 // GenerateJob 根据Task产生一个Job实例
-func (t *Task) GenerateJob(jobUid string, dispatchedTime int64) *Job {
+func (t *Task) GenerateJob(jobUid string, dispatchedTime, seq int64) *Job {
 	return &Job{
 		JobUid:         jobUid,
 		TaskName:       t.Name,
 		TaskKey:        t.Key,
 		DispatchedTime: dispatchedTime,
+		Seq:            seq,
 		Args: map[string]interface{}{
 			// fake
 			"arg1": "YB",
@@ -57,5 +58,14 @@ func (t *Task) ToGocronJobDefinition() gocron.JobDefinition {
 				gocron.NewAtTime(t.DailyDef.Hour, t.DailyDef.Minute, t.DailyDef.Second),
 			),
 		)
+	}
+}
+
+// ToRunningTaskStatus 根据Task转换成RunningTaskStatus对象
+func (t *Task) ToRunningTaskStatus() *RunningTaskStatus {
+	return &RunningTaskStatus{
+		TaskName: t.Name,
+		TaskKey:  t.Key,
+		Seq:      0, // 一个新的RunningTaskStatus的Seq从0开始
 	}
 }

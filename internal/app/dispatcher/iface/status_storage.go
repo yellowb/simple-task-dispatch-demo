@@ -10,6 +10,8 @@ type StatusStorage interface {
 	DeleteRunningTaskStatus(taskKey string) error
 	// GetRunningTaskStatus 获取某一个Task的运行时状态
 	GetRunningTaskStatus(taskKey string) (*model.RunningTaskStatus, error)
+	// ExistRunningTaskStatus 判断是否已经存在一个特定Task
+	ExistRunningTaskStatus(taskKey string) (bool, error)
 	// GetDispatcherStatus 获取Dispatcher完整运行时状态
 	GetDispatcherStatus() (*model.DispatcherStatus, error)
 	// Clear 清空Dispatcher内部状态数据
