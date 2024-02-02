@@ -1,7 +1,7 @@
-package constants
+package dispatcher_status
 
 // DispatcherStatus Dispatcher状态
-type DispatcherStatus int
+type DispatcherStatus uint8
 
 const (
 	New         DispatcherStatus = iota // 刚创建，还没有初始化好，不能运行

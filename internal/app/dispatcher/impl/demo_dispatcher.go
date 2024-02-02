@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"github.com/go-co-op/gocron/v2"
 	"github.com/google/uuid"
+	"github.com/yellowb/simple-task-dispatch-demo/internal/app/dispatcher/dispatcher_status"
 	"github.com/yellowb/simple-task-dispatch-demo/internal/app/dispatcher/error_types"
 	"github.com/yellowb/simple-task-dispatch-demo/internal/app/dispatcher/iface"
-	"github.com/yellowb/simple-task-dispatch-demo/internal/constants"
 	"github.com/yellowb/simple-task-dispatch-demo/internal/global"
 	model2 "github.com/yellowb/simple-task-dispatch-demo/internal/model"
 	"log"
@@ -30,13 +30,13 @@ type DemoDispatcher struct {
 	scheduler gocron.Scheduler
 
 	// Dispatcher其它内部属性
-	status constants.DispatcherStatus // Dispatcher状态
+	status dispatcher_status.DispatcherStatus // Dispatcher状态
 	lock   sync.Mutex
 }
 
 func NewDemoDispatcher() *DemoDispatcher {
 	return &DemoDispatcher{
-		status: constants.New,
+		status: dispatcher_status.New,
 		lock:   sync.Mutex{},
 	}
 }
@@ -67,7 +67,7 @@ func (d *DemoDispatcher) Init() error {
 	defer d.lock.Unlock()
 
 	// 禁止重复初始化
-	err := d.checkStatus(constants.New)
+	err := d.checkStatus(dispatcher_status.New)
 	if err != nil {
 		return err
 	}
@@ -94,7 +94,7 @@ func (d *DemoDispatcher) Init() error {
 
 	d.scheduler = scheduler
 
-	d.status = constants.Initialized
+	d.status = dispatcher_status.Initialized
 	return nil
 }
 
@@ -103,7 +103,7 @@ func (d *DemoDispatcher) Add(task *model2.Task) error {
 	d.lock.Lock()
 	defer d.lock.Unlock()
 
-	err := d.checkStatus(constants.Initialized, constants.Running)
+	err := d.checkStatus(dispatcher_status.Initialized, dispatcher_status.Running)
 	if err != nil {
 		return err
 	}
@@ -119,7 +119,7 @@ func (d *DemoDispatcher) Remove(taskKey string) error {
 	d.lock.Lock()
 	defer d.lock.Unlock()
 
-	err := d.checkStatus(constants.Initialized, constants.Running)
+	err := d.checkStatus(dispatcher_status.Initialized, dispatcher_status.Running)
 	if err != nil {
 		return err
 	}
@@ -132,7 +132,7 @@ func (d *DemoDispatcher) Reload() error {
 	d.lock.Lock()
 	defer d.lock.Unlock()
 
-	err := d.checkStatus(constants.Initialized, constants.Running)
+	err := d.checkStatus(dispatcher_status.Initialized, dispatcher_status.Running)
 	if err != nil {
 		return err
 	}
@@ -166,13 +166,13 @@ func (d *DemoDispatcher) Run() error {
 	d.lock.Lock()
 	defer d.lock.Unlock()
 
-	err := d.checkStatus(constants.Initialized)
+	err := d.checkStatus(dispatcher_status.Initialized)
 	if err != nil {
 		return err
 	}
 
 	d.scheduler.Start()
-	d.status = constants.Running
+	d.status = dispatcher_status.Running
 	return nil
 }
 
@@ -181,17 +181,17 @@ func (d *DemoDispatcher) Shutdown() error {
 	d.lock.Lock()
 	defer d.lock.Unlock()
 
-	err := d.checkStatus(constants.Running)
+	err := d.checkStatus(dispatcher_status.Running)
 	if err != nil {
 		return err
 	}
 
-	d.status = constants.Shutdown
+	d.status = dispatcher_status.Shutdown
 	return d.scheduler.Shutdown()
 }
 
 // 检查当前Dispatcher的状态是否在给定的statusList集合中
-func (d *DemoDispatcher) checkStatus(statusList ...constants.DispatcherStatus) error {
+func (d *DemoDispatcher) checkStatus(statusList ...dispatcher_status.DispatcherStatus) error {
 	for _, status := range statusList {
 		if d.status == status {
 			return nil
