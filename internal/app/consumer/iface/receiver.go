@@ -19,6 +19,6 @@ type Receiver interface {
 	Run() error
 	// Stop 停止Receiver
 	Stop() error
-	// GetJobReceiveChannel 返回一个channel，后续使用者可以从这个channel中拿到Receiver接收到的Job
-	GetJobReceiveChannel() <-chan *model.Job
+	// GetJobChannel 返回一个channel，后续使用者可以从这个channel中拿到Receiver接收到的Job
+	GetJobChannel() <-chan *model.Job
 }

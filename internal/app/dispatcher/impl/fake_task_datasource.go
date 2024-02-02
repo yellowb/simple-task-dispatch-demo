@@ -19,13 +19,13 @@ func (p *FakeTaskDatasource) GetAllTasks() ([]*model.Task, error) {
 	return []*model.Task{
 		&model.Task{
 			Name:        "task-5s",
-			Key:         "task-5s",
+			Key:         "task-a",
 			TaskType:    constants.TaskTypeDuration,
 			DurationDef: &model.DurationDefinition{Duration: 5 * time.Second},
 		},
 		&model.Task{
 			Name:        "task-10s",
-			Key:         "task-10s",
+			Key:         "task-b",
 			TaskType:    constants.TaskTypeDuration,
 			DurationDef: &model.DurationDefinition{Duration: 10 * time.Second},
 		},

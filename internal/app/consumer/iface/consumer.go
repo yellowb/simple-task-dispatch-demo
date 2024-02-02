@@ -1,6 +1,9 @@
 package iface
 
-import "github.com/yellowb/simple-task-dispatch-demo/internal/global"
+import (
+	"github.com/yellowb/simple-task-dispatch-demo/internal/global"
+	"github.com/yellowb/simple-task-dispatch-demo/internal/model"
+)
 
 /**
 Consumer表示Job的消费者
@@ -23,4 +26,9 @@ type Consumer interface {
 	Run() error
 	// Shutdown 终止Consumer
 	Shutdown() error
+
+	/* 下面这些是Consumer暴露给Worker使用的接口 */
+
+	// GetJobChannel 返回一个channel，后续Worker可以从这个channel中拿到Consumer派发的Job
+	GetJobChannel() <-chan *model.Job
 }
