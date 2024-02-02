@@ -159,5 +159,5 @@ func (r *RedisQueueReceiver) checkStatus(statusList ...receiver_status.ReceiverS
 	for _, status := range statusList {
 		statusStrList = append(statusStrList, status.String())
 	}
-	return fmt.Errorf("receiver status must be in %s, current status: %s", strings.Join(statusStrList, "/"), d.status.String())
+	return fmt.Errorf("receiver status must be in %s, current status: %s", strings.Join(statusStrList, "/"), r.status.String())
 }
