@@ -7,9 +7,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/yellowb/simple-task-dispatch-demo/internal/app/dispatcher/error_types"
 	"github.com/yellowb/simple-task-dispatch-demo/internal/app/dispatcher/iface"
-	"github.com/yellowb/simple-task-dispatch-demo/internal/app/dispatcher/model"
 	"github.com/yellowb/simple-task-dispatch-demo/internal/constants"
 	"github.com/yellowb/simple-task-dispatch-demo/internal/global"
+	model2 "github.com/yellowb/simple-task-dispatch-demo/internal/model"
 	"log"
 	"strings"
 	"sync"
@@ -99,7 +99,7 @@ func (d *DemoDispatcher) Init() error {
 }
 
 // Add 往Dispatcher中增加一个Task
-func (d *DemoDispatcher) Add(task *model.Task) error {
+func (d *DemoDispatcher) Add(task *model2.Task) error {
 	d.lock.Lock()
 	defer d.lock.Unlock()
 
@@ -207,12 +207,12 @@ func (d *DemoDispatcher) checkStatus(statusList ...constants.DispatcherStatus) e
 }
 
 // 从Task数据源获取所有最新的Task
-func (d *DemoDispatcher) loadLatestTasks() ([]*model.Task, error) {
+func (d *DemoDispatcher) loadLatestTasks() ([]*model2.Task, error) {
 	return d.taskDatasource.GetAllTasks()
 }
 
 // 把一个Task作为调度任务添加进scheduler
-func (d *DemoDispatcher) addToScheduler(task *model.Task) (gocron.Job, error) {
+func (d *DemoDispatcher) addToScheduler(task *model2.Task) (gocron.Job, error) {
 	// 不能重复添加TaskKey相同的Task
 	ok, err := d.statusStorage.ExistRunningTaskStatus(task.Key)
 	if err != nil {
@@ -271,7 +271,7 @@ func (d *DemoDispatcher) clearScheduler() error {
 }
 
 // 更新taskKey对应的Task的运行时状态。本方法会返回最新的RunningTaskStatus对象。
-func (d *DemoDispatcher) updateRunningTaskStatus(taskKey string) (*model.RunningTaskStatus, error) {
+func (d *DemoDispatcher) updateRunningTaskStatus(taskKey string) (*model2.RunningTaskStatus, error) {
 	taskStatus, err := d.statusStorage.GetRunningTaskStatus(taskKey)
 	if err != nil {
 		return nil, err
@@ -286,7 +286,7 @@ func (d *DemoDispatcher) updateRunningTaskStatus(taskKey string) (*model.Running
 }
 
 // 返回一个用于被scheduler调度的闭包函数，由于Dispatcher的需求都是往Queue投递消息，所以只有一种被调度的函数
-func (d *DemoDispatcher) taskFunc(task *model.Task) func() {
+func (d *DemoDispatcher) taskFunc(task *model2.Task) func() {
 	return func() {
 		// 每次分派一个Task，都更新状态存储器中对应的RunningTaskStatus条目
 		taskStatus, err := d.updateRunningTaskStatus(task.Key)

@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/redis/go-redis/v9"
-	"github.com/yellowb/simple-task-dispatch-demo/internal/app/dispatcher/model"
+	"github.com/yellowb/simple-task-dispatch-demo/internal/model"
 	"time"
 )
 

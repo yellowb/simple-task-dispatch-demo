@@ -1,6 +1,8 @@
 package iface
 
-import "github.com/yellowb/simple-task-dispatch-demo/internal/app/dispatcher/model"
+import (
+	"github.com/yellowb/simple-task-dispatch-demo/internal/model"
+)
 
 // Deliverier Job投递器接口
 type Deliverier interface {

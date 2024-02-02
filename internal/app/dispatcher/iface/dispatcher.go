@@ -1,8 +1,8 @@
 package iface
 
 import (
-	"github.com/yellowb/simple-task-dispatch-demo/internal/app/dispatcher/model"
 	"github.com/yellowb/simple-task-dispatch-demo/internal/global"
+	"github.com/yellowb/simple-task-dispatch-demo/internal/model"
 )
 
 // Dispatcher 工作分派者接口

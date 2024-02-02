@@ -1,7 +1,7 @@
 package impl
 
 import (
-	"github.com/yellowb/simple-task-dispatch-demo/internal/app/dispatcher/model"
+	model2 "github.com/yellowb/simple-task-dispatch-demo/internal/model"
 	"sync"
 )
 
@@ -17,7 +17,7 @@ func NewMemoryStatusStorage() *MemoryStatusStorage {
 	}
 }
 
-func (m *MemoryStatusStorage) PutRunningTaskStatus(taskKey string, taskStatus *model.RunningTaskStatus) error {
+func (m *MemoryStatusStorage) PutRunningTaskStatus(taskKey string, taskStatus *model2.RunningTaskStatus) error {
 	m.taskMap.Store(taskKey, taskStatus)
 	return nil
 }
@@ -27,12 +27,12 @@ func (m *MemoryStatusStorage) DeleteRunningTaskStatus(taskKey string) error {
 	return nil
 }
 
-func (m *MemoryStatusStorage) GetRunningTaskStatus(taskKey string) (*model.RunningTaskStatus, error) {
+func (m *MemoryStatusStorage) GetRunningTaskStatus(taskKey string) (*model2.RunningTaskStatus, error) {
 	value, ok := m.taskMap.Load(taskKey)
 	if !ok {
 		return nil, nil
 	}
-	return value.(*model.RunningTaskStatus), nil
+	return value.(*model2.RunningTaskStatus), nil
 }
 
 func (m *MemoryStatusStorage) ExistRunningTaskStatus(taskKey string) (bool, error) {
@@ -40,13 +40,13 @@ func (m *MemoryStatusStorage) ExistRunningTaskStatus(taskKey string) (bool, erro
 	return ok, nil
 }
 
-func (m *MemoryStatusStorage) GetDispatcherStatus() (*model.DispatcherStatus, error) {
-	data := make(map[string]*model.RunningTaskStatus)
+func (m *MemoryStatusStorage) GetDispatcherStatus() (*model2.DispatcherStatus, error) {
+	data := make(map[string]*model2.RunningTaskStatus)
 	m.taskMap.Range(func(key, value any) bool {
-		data[key.(string)] = value.(*model.RunningTaskStatus)
+		data[key.(string)] = value.(*model2.RunningTaskStatus)
 		return true
 	})
-	return &model.DispatcherStatus{
+	return &model2.DispatcherStatus{
 		RunningTaskCount:    len(data),
 		RunningTaskStatuses: data,
 	}, nil
