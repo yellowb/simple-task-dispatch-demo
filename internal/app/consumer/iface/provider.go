@@ -1,6 +1,6 @@
 package iface
 
-import "github.com/yellowb/simple-task-dispatch-demo/internal/app/dispatcher/model"
+import "github.com/yellowb/simple-task-dispatch-demo/internal/app/consumer/model"
 
 type Provider interface {
 	// 监听queue，获取消息

@@ -1,8 +1,9 @@
 package impl
 
 import (
-	"fmt"
+	"github.com/sirupsen/logrus"
 	"github.com/yellowb/simple-task-dispatch-demo/internal/app/consumer/iface"
+	"github.com/yellowb/simple-task-dispatch-demo/internal/app/consumer/model"
 	"github.com/yellowb/simple-task-dispatch-demo/internal/global"
 	"sync"
 )
@@ -13,6 +14,7 @@ type DemoConsumer struct {
 	taskMapping iface.TaskMapping
 	provider    iface.Provider
 	waitGroup   sync.WaitGroup
+	workerPool  chan struct{}
 }
 
 // NewConsumer returns a new instance of DemoConsumer
@@ -42,17 +44,42 @@ func (d *DemoConsumer) Provider(provider iface.Provider) iface.Consumer {
 	return d
 }
 
-func (d *DemoConsumer) ConsumeTask() {
-	for i := 0; i < d.cfg.WorkerPoolSize; i++ {
-		d.waitGroup.Add(1)
-		go func() {
-			defer d.waitGroup.Done()
-			d.worker.ProcessTask()
-		}()
-	}
+// 初始化
+func (d *DemoConsumer) Init() error {
+	//TODO implement me
+	panic("implement me")
+}
 
-	for task := range d.provider.GetTaskChan() {
-		// Process the task based on the task mapping
-		fmt.Println("Processing task:", task)
+// 启动
+func (d *DemoConsumer) Run() error {
+	//TODO implement me
+	panic("implement me")
+}
+
+// 关闭
+func (d *DemoConsumer) Shutdown() error {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (d *DemoConsumer) ConsumeTask() {
+	for job := range d.provider.GetTaskChan() {
+		taskHandler, err := d.taskMapping.GetTaskHandler(d.taskMapping.GetMappingKey(job))
+		if err != nil {
+			logrus.Errorf("")
+			continue
+		}
+		// 获取一个空结构体，表示占用了一个worker的资源,如果workerPool满了将阻塞在这里
+		d.workerPool <- struct{}{}
+		go func(job *model.Job, handler *model.TaskHandler) {
+			defer func() {
+				// 释放一个worker的资源
+				<-d.workerPool
+				d.waitGroup.Done()
+			}()
+			d.waitGroup.Add(1)
+			//调用worker处理任务
+			d.worker.ProcessTask(job, taskHandler)
+		}(job, taskHandler)
 	}
 }

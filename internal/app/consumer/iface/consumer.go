@@ -16,6 +16,13 @@ type Consumer interface {
 	//注入TaskMapping
 	TaskMapping(taskMapping TaskMapping) Consumer
 
+	//初始化
+	Init() error
+	//启动
+	Run() error
+	//关闭
+	Shutdown() error
+
 	// 消费消息
 	ConsumeTask()
 }

@@ -1,6 +1,10 @@
 package impl
 
-import "github.com/yellowb/simple-task-dispatch-demo/internal/app/consumer/iface"
+import (
+	"context"
+	"github.com/yellowb/simple-task-dispatch-demo/internal/app/consumer/iface"
+	"github.com/yellowb/simple-task-dispatch-demo/internal/app/consumer/model"
+)
 
 type DemoWorker struct {
 	taskDataStorage iface.TaskDataStorage
@@ -21,7 +25,19 @@ func (d *DemoWorker) Executor(executor iface.Executor) iface.Worker {
 	return d
 }
 
-func (d *DemoWorker) ProcessTask() {
-	//TODO implement me
-	panic("implement me")
+func (d *DemoWorker) ProcessTask(job *model.Job, handler *model.TaskHandler) {
+	ctx := context.Background()
+	handler.Args = job.Args
+	err := d.executor.Execute(ctx, handler)
+	if err != nil {
+
+	}
+	//
+	result := ctx.Value("result")
+	logsVal := ctx.Value("logs")
+	logs, ok := logsVal.([]string)
+	if !ok {
+		//
+	}
+	d.taskDataStorage.SaveTaskRecord(job, true, result, logs)
 }
