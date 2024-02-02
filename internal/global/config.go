@@ -15,8 +15,8 @@ type DispatcherConfig struct {
 	QueueName string
 }
 
-// WorkerConfig 消费者进程启动配置
-type WorkerConfig struct {
+// ConsumerConfig 消费者进程启动配置
+type ConsumerConfig struct {
 	RedisCfg
 	// 消息队列名字
 	QueueName string
