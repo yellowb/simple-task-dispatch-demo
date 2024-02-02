@@ -46,12 +46,13 @@ func (r *RedisProvider) GetTaskChan() chan *model.Job {
 	return r.taskChan
 }
 
-func NewRedisQueueProvider(mq string) (*RedisProvider, error) {
+func NewRedisQueueProvider(mq string, taskChanSize int) (*RedisProvider, error) {
 	if global.GetRedisCli() == nil {
 		return nil, errors.New("redis client error")
 	}
 	return &RedisProvider{
 		redisCli:  global.GetRedisCli(),
 		queueName: mq,
+		taskChan:  make(chan *model.Job, taskChanSize),
 	}, nil
 }

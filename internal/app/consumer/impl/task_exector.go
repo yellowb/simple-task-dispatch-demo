@@ -7,7 +7,10 @@ import (
 
 type TaskExecutor struct{}
 
-func (TaskExecutor) Execute(ctx context.Context, taskHandler *model.TaskHandler) error {
-	//TODO implement me
-	panic("implement me")
+func (TaskExecutor) Execute(ctx context.Context, taskHandler *model.TaskHandler) (bool, error) {
+	taskHandler.ExecFunc(ctx)
+	if ctx.Err() != nil {
+		return false, ctx.Err()
+	}
+	return true, nil
 }

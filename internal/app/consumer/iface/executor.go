@@ -7,5 +7,5 @@ import (
 
 type Executor interface {
 	//任务执行
-	Execute(ctx context.Context, taskHandler *model.TaskHandler) error
+	Execute(ctx context.Context, taskHandler *model.TaskHandler) (bool, error)
 }

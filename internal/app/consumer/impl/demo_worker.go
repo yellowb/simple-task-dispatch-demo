@@ -2,6 +2,7 @@ package impl
 
 import (
 	"context"
+	"github.com/sirupsen/logrus"
 	"github.com/yellowb/simple-task-dispatch-demo/internal/app/consumer/iface"
 	"github.com/yellowb/simple-task-dispatch-demo/internal/app/consumer/model"
 )
@@ -28,16 +29,17 @@ func (d *DemoWorker) Executor(executor iface.Executor) iface.Worker {
 func (d *DemoWorker) ProcessTask(job *model.Job, handler *model.TaskHandler) {
 	ctx := context.Background()
 	handler.Args = job.Args
-	err := d.executor.Execute(ctx, handler)
+	isSuccess, err := d.executor.Execute(ctx, handler)
 	if err != nil {
-
+		logrus.Errorf(err.Error())
 	}
 	//
 	result := ctx.Value("result")
 	logsVal := ctx.Value("logs")
 	logs, ok := logsVal.([]string)
 	if !ok {
-		//
+		logrus.Errorf("")
+		d.taskDataStorage.SaveTaskRecord(job, isSuccess, result, nil)
 	}
-	d.taskDataStorage.SaveTaskRecord(job, true, result, logs)
+	d.taskDataStorage.SaveTaskRecord(job, isSuccess, result, logs)
 }
