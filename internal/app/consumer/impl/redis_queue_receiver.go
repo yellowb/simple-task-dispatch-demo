@@ -13,6 +13,7 @@ import (
 	"log"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -31,9 +32,7 @@ type RedisQueueReceiver struct {
 	redisCli  *redis.Client
 	queueName string          // Key of redis list
 	jobCh     chan *model.Job // 从Redis Queue接收后的Job缓冲在这个channel等待Consumer取走
-
-	//TODO：这玩意可能有多线程风险，后面改掉
-	stopFlag bool // 跳出从Redis Queue获取数据的循环的标记位
+	stopFlag  atomic.Bool     // 跳出从Redis Queue获取数据的循环的标记位
 }
 
 func NewRedisQueueReceiver() *RedisQueueReceiver {
@@ -83,7 +82,7 @@ func (r *RedisQueueReceiver) Init() error {
 	}
 	r.jobCh = make(chan *model.Job, jobChLen)
 
-	r.stopFlag = false
+	r.stopFlag.Store(false)
 
 	r.status = receiver_status.Initialized
 	return nil
@@ -101,7 +100,7 @@ func (r *RedisQueueReceiver) Run() error {
 
 	// 起一个新协程循环从Redis Queue中读取数据，然后投递到jobCh中
 	go func(receiver *RedisQueueReceiver) {
-		for !receiver.stopFlag {
+		for !receiver.stopFlag.Load() {
 			v, err := receiver.redisCli.BRPop(context.Background(), defaultRedisPopTimeout, receiver.queueName).Result()
 			if err != nil {
 				// redis.Nil不用管
@@ -121,7 +120,7 @@ func (r *RedisQueueReceiver) Run() error {
 
 			r.jobCh <- job
 		}
-		receiver.stopFlag = false // 重制标志位
+		receiver.stopFlag.Store(false) // 重制标志位
 		log.Printf("[RedisQueueReceiver] loop exited")
 	}(r)
 
@@ -138,8 +137,9 @@ func (r *RedisQueueReceiver) Stop() error {
 	if err != nil {
 		return err
 	}
+	r.status = receiver_status.Stopped
 
-	r.stopFlag = true
+	r.stopFlag.Store(true)
 	return nil
 }
 
