@@ -6,17 +6,17 @@ import (
 )
 
 /**
-假的业务Handler
+假的业务Executor
 */
 
-type FakeHandlerA struct {
+type FakeExecutorA struct {
 }
 
-func (f *FakeHandlerA) HandlerKey() string {
+func (f *FakeExecutorA) ExecutorKey() string {
 	return "task-a"
 }
 
-func (f *FakeHandlerA) Handle(job *model.Job) (*model.JobExecResult, error) {
+func (f *FakeExecutorA) Execute(job *model.Job) (*model.JobExecResult, error) {
 	time.Sleep(2 * time.Second)
 	return &model.JobExecResult{
 		Succeed: true,
@@ -33,11 +33,11 @@ func (f *FakeHandlerA) Handle(job *model.Job) (*model.JobExecResult, error) {
 type FakeHandlerB struct {
 }
 
-func (f FakeHandlerB) HandlerKey() string {
+func (f FakeHandlerB) ExecutorKey() string {
 	return "task-b"
 }
 
-func (f FakeHandlerB) Handle(job *model.Job) (*model.JobExecResult, error) {
+func (f FakeHandlerB) Execute(job *model.Job) (*model.JobExecResult, error) {
 	time.Sleep(3 * time.Second)
 	return &model.JobExecResult{
 		Succeed: true,
