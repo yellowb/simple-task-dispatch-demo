@@ -202,7 +202,7 @@ func (d *DemoWorker) work(pair *iface.JobExecutorPair) {
 			}
 		}()
 
-		storeErr := d.taskResultStorage.SaveJobExecRecord(record)
+		storeErr := d.taskResultStorage.SaveJobExecRecord(d.name, record)
 		if storeErr != nil {
 			log.Printf("[Error][%s] save job exec record error: %v", d.name, storeErr)
 			return

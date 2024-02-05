@@ -10,7 +10,7 @@ type FakeTaskResultStorage struct {
 	// 应该要有一些DAO什么的...
 }
 
-func (f *FakeTaskResultStorage) SaveJobExecRecord(jobExecRecord *model.JobExecRecord) error {
-	log.Printf("job exec record saved : %s : %s", jobExecRecord.Job.TaskKey, jobExecRecord.Job.JobUid)
+func (f *FakeTaskResultStorage) SaveJobExecRecord(who string, jobExecRecord *model.JobExecRecord) error {
+	log.Printf("[%s] job exec record saved : %s : %s", who, jobExecRecord.Job.TaskKey, jobExecRecord.Job.JobUid)
 	return nil
 }
