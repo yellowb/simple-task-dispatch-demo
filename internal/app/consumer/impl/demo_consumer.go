@@ -147,6 +147,7 @@ func (d *DemoConsumer) Run() error {
 					if executor == nil {
 						// 找不到匹配的Executor！正常不应该出现这种情况，打log
 						log.Printf("[Warn][Consumer] cannot match executor with key : %s", v.ExecutorKey)
+						continue
 					}
 					// 把Job和Executor打包投递给Worker
 					pair := &iface.JobExecutorPair{
