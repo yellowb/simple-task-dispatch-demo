@@ -1,6 +1,8 @@
 package iface
 
-import "github.com/yellowb/simple-task-dispatch-demo/internal/app/dispatcher/model"
+import (
+	"github.com/yellowb/simple-task-dispatch-demo/internal/model"
+)
 
 // StatusStorage Dispatcher内部状态存储器接口
 type StatusStorage interface {

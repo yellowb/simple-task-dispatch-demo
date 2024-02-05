@@ -2,6 +2,7 @@ package iface
 
 import (
 	"github.com/yellowb/simple-task-dispatch-demo/internal/global"
+	"github.com/yellowb/simple-task-dispatch-demo/internal/model"
 )
 
 type Consumer interface {
@@ -9,12 +10,8 @@ type Consumer interface {
 
 	// Config 注入配置到Consumer
 	Config(cfg *global.ConsumerConfig) Consumer
-	//注入Provider
-	Provider(provider Provider) Consumer
-	//注入worker
-	Worker(worker Worker) Consumer
-	//注入TaskMapping
-	TaskMapping(taskMapping TaskMapping) Consumer
+	//Receiver
+	Receiver(receiver Receiver) Consumer
 
 	//初始化
 	Init() error
@@ -23,6 +20,15 @@ type Consumer interface {
 	//关闭
 	Shutdown() error
 
-	// 消费消息
-	ConsumeTask()
+	// 任务执行器
+	GetJobExecutor() <-chan *JobExecutor
+
+	//任务映射
+	GetMappingExecutor(job *model.Job) *JobExecutor
+}
+
+// JobExecutor 从队列获取的任务和执行器
+type JobExecutor struct {
+	model.Job
+	Executor Executor
 }

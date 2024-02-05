@@ -1,13 +1,15 @@
 package iface
 
-import "github.com/yellowb/simple-task-dispatch-demo/internal/app/consumer/model"
-
 type Worker interface {
 	//注入TaskDataStorage
-	TaskDataStorage(storage TaskDataStorage) Worker
-	//注入任务执行器Executor
-	Executor(executor Executor) Worker
+	TaskResultStorage(storage TaskResultStorage) Worker
+	//注入Consumer
+	Consumer(consumer Consumer) Worker
 
-	//处理消息
-	ProcessTask(job *model.Job, handler *model.TaskHandler)
+	//初始化
+	Init() error
+	//启动
+	Run() error
+	//关闭
+	Shutdown() error
 }

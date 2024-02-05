@@ -1,8 +1,8 @@
 package impl
 
 import (
-	"github.com/yellowb/simple-task-dispatch-demo/internal/app/dispatcher/model"
 	"github.com/yellowb/simple-task-dispatch-demo/internal/constants"
+	"github.com/yellowb/simple-task-dispatch-demo/internal/model"
 	"time"
 )
 

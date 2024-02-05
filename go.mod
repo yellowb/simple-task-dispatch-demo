@@ -10,7 +10,11 @@ require (
 require (
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
+	github.com/go-redis/redis/v8 v8.11.4 // indirect
+	github.com/go-redsync/redsync/v4 v4.11.0 // indirect
 	github.com/google/uuid v1.5.0 // indirect
+	github.com/hashicorp/errwrap v1.1.0 // indirect
+	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/jonboulle/clockwork v0.4.0 // indirect
 	github.com/robfig/cron/v3 v3.0.1 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect

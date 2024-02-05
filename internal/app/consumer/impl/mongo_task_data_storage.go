@@ -1,18 +1,25 @@
 package impl
 
-import "github.com/yellowb/simple-task-dispatch-demo/internal/app/consumer/model"
+import (
+	"fmt"
+	"github.com/yellowb/simple-task-dispatch-demo/internal/model"
+)
 
 type MongoTaskDataStorage struct {
 	//taskRecordDao
 	//taskStatusDao
 }
 
-func (m *MongoTaskDataStorage) SaveTaskRecord(job *model.Job, isSuccess bool, result interface{}, logs []string) {
-	//TODO implement me
-	panic("implement me")
+func NewMongoTaskDataStorage() *MongoTaskDataStorage {
+	return &MongoTaskDataStorage{}
 }
 
-func (m *MongoTaskDataStorage) UpdateTaskStatus(taskKey string, isSuccess bool) {
-	//TODO implement me
-	panic("implement me")
+func (m *MongoTaskDataStorage) SaveTaskRecord(jobRecord *model.JobRecord) error {
+	fmt.Printf("insert job record success, record = %v\n", jobRecord)
+	return nil
+}
+
+func (m *MongoTaskDataStorage) UpdateTaskStatus(taskStatus *model.TaskStatus) error {
+	fmt.Printf("upsert task status success, record = %v\n", taskStatus)
+	return nil
 }

@@ -1,6 +1,8 @@
 package iface
 
-import "github.com/yellowb/simple-task-dispatch-demo/internal/app/dispatcher/model"
+import (
+	"github.com/yellowb/simple-task-dispatch-demo/internal/model"
+)
 
 // TaskDatasource 提供Task数据的源头
 type TaskDatasource interface {
