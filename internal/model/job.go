@@ -5,9 +5,9 @@ type Job struct {
 	JobUid string `json:"job_uid"`
 
 	// Task相关信息
-	TaskName   string `json:"task_name"`
-	TaskKey    string `json:"task_key"`
-	HandlerKey string `json:"handler_key"` // Consumer端靠这个来路由到真正的处理逻辑
+	TaskName    string `json:"task_name"`
+	TaskKey     string `json:"task_key"`
+	ExecutorKey string `json:"handler_key"` // Consumer端靠这个来路由到真正的处理逻辑
 
 	// Job相关信息
 	DispatchedTime int64                  `json:"dispatched_time"` // Job被分派的时间

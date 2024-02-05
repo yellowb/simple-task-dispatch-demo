@@ -33,11 +33,11 @@ func (f *FakeExecutorA) Execute(job *model.Job) (*model.JobExecResult, error) {
 type FakeHandlerB struct {
 }
 
-func (f FakeHandlerB) ExecutorKey() string {
+func (f *FakeHandlerB) ExecutorKey() string {
 	return "task-b"
 }
 
-func (f FakeHandlerB) Execute(job *model.Job) (*model.JobExecResult, error) {
+func (f *FakeHandlerB) Execute(job *model.Job) (*model.JobExecResult, error) {
 	time.Sleep(3 * time.Second)
 	return &model.JobExecResult{
 		Succeed: true,

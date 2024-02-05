@@ -19,6 +19,8 @@ type DispatcherConfig struct {
 type ConsumerConfig struct {
 	// 每一个Consumer节点启动多少个go routine用于处理Task
 	WorkerPoolSize int
+	// Job缓冲区大小
+	JobBufferSize int
 }
 
 // ReceiverConfig Job接收者启动配置

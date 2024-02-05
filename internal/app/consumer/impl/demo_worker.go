@@ -133,7 +133,7 @@ func (d *DemoWorker) Stop() error {
 	return nil
 }
 
-// 检查当前Dispatcher的状态是否在给定的statusList集合中
+// 检查当前Worker的状态是否在给定的statusList集合中
 func (d *DemoWorker) checkStatus(statusList ...worker_status.WorkerStatus) error {
 	for _, status := range statusList {
 		if d.status == status {
@@ -146,7 +146,7 @@ func (d *DemoWorker) checkStatus(statusList ...worker_status.WorkerStatus) error
 	for _, status := range statusList {
 		statusStrList = append(statusStrList, status.String())
 	}
-	return fmt.Errorf("dispatcher status must be in %s, current status: %s", strings.Join(statusStrList, "/"), d.status.String())
+	return fmt.Errorf("worker status must be in %s, current status: %s", strings.Join(statusStrList, "/"), d.status.String())
 }
 
 // 包装一个方法用于worker协程执行executor逻辑，把通用的前置和后置逻辑抽到这个方法中

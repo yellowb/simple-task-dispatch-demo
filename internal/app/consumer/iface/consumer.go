@@ -16,7 +16,7 @@ type Consumer interface {
 	// Config 注入配置到Consumer
 	Config(cfg *global.ConsumerConfig) Consumer
 	// Receiver 注入Job的接收器到Consumer
-	Receiver(receiver Receiver)
+	Receiver(receiver Receiver) Consumer
 
 	/* 下面这些是影响Consumer运行状态的接口 */
 
