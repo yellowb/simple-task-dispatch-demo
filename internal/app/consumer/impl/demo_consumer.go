@@ -10,6 +10,7 @@ import (
 	"log"
 	"strings"
 	"sync"
+	"time"
 )
 
 const (
@@ -126,6 +127,7 @@ func (d *DemoConsumer) Run() error {
 	}
 
 	// 起一个协程不断从Receiver获取Job，投递给Worker处理
+	ticker := time.NewTicker(time.Minute)
 	receiverCh := d.receiver.GetJobChannel()
 	go func(consumer *DemoConsumer) {
 		log.Printf("[Consumer] consumer started")
@@ -156,8 +158,13 @@ func (d *DemoConsumer) Run() error {
 			case <-consumer.ctx.Done():
 				{
 					// consumer 被 shutdown
-					log.Printf("consumer shutdown")
+					log.Printf("[Consumer] consumer shutdown")
 					break
+				}
+			case <-ticker.C:
+				{
+					// 打印一句日志表示自己还活着
+					log.Printf("[Consumer] i am alive")
 				}
 			}
 		}

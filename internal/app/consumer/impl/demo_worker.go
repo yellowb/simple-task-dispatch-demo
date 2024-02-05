@@ -90,6 +90,7 @@ func (d *DemoWorker) Run() error {
 	d.ctx, d.cancelFunc = context.WithCancel(context.Background())
 
 	// 起一个协程，不断从父Consumer的channel获取Job执行
+	ticker := time.NewTicker(time.Minute)
 	ch := d.father.GetJobExecutorPairChannel()
 	go func(worker *DemoWorker) {
 		log.Printf("[%s] worker started", worker.name)
@@ -106,9 +107,16 @@ func (d *DemoWorker) Run() error {
 					worker.work(v)
 				}
 			case <-worker.ctx.Done():
-				// worker被Stop
-				log.Printf("[%s] worker stopped", worker.name)
-				break
+				{
+					// worker被Stop
+					log.Printf("[%s] worker stopped", worker.name)
+					break
+				}
+			case <-ticker.C:
+				{
+					// 打印一句日志表示自己还活着
+					log.Printf("[%s] i am alive", worker.name)
+				}
 			}
 		}
 	}(d)

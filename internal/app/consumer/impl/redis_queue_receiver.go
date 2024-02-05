@@ -19,7 +19,7 @@ import (
 
 const (
 	defaultJobChLen        = 10 * 1024
-	defaultRedisPopTimeout = 2 * time.Second
+	defaultRedisPopTimeout = 10 * time.Second
 )
 
 type RedisQueueReceiver struct {
@@ -65,10 +65,9 @@ func (r *RedisQueueReceiver) Init() error {
 
 	// 初始化 redis client
 	cli := redis.NewClient(&redis.Options{
-		Addr:        fmt.Sprintf("%s:%s", r.cfg.Addr, r.cfg.Port),
-		Password:    r.cfg.Password,
-		DB:          r.cfg.Db,
-		ReadTimeout: 10 * time.Second, // go-redis默认值为3s, 可能在BRPOP中堵塞超时设置稍微大一点就会有问题，所以调大它
+		Addr:     fmt.Sprintf("%s:%s", r.cfg.Addr, r.cfg.Port),
+		Password: r.cfg.Password,
+		DB:       r.cfg.Db,
 	})
 	_, err = cli.Ping(context.Background()).Result()
 	if err != nil {
@@ -108,10 +107,11 @@ func (r *RedisQueueReceiver) Run() error {
 			if err != nil {
 				if !errors.Is(err, redis.Nil) {
 					// 遇到错误了，等一会再试试
-					log.Printf("[ERROR] pop message from redis error : %v", err)
+					log.Printf("[ERROR][Receiver] pop message from redis error : %v", err)
 					time.Sleep(time.Second)
 				} else {
 					// redis.Nil表示redis中这个List为空，读不出东西，不断循环BRPop就行
+					log.Printf("[Receiver] i am alive, the queue is empty")
 					continue
 				}
 			}
@@ -121,8 +121,10 @@ func (r *RedisQueueReceiver) Run() error {
 			if err != nil {
 				// 坏数据，直接丢弃
 				log.Printf("[ERROR] parse redis queue message data error : %v", err)
+				continue
 			}
 
+			// 投递给Consumer
 			r.jobCh <- job
 		}
 		log.Printf("[RedisQueueReceiver] loop exited")
