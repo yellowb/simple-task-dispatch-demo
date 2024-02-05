@@ -98,6 +98,8 @@ func (r *RedisQueueReceiver) Run() error {
 		return err
 	}
 
+	r.stopFlag.Store(false) // 重制标志位
+
 	// 起一个新协程循环从Redis Queue中读取数据，然后投递到jobCh中
 	go func(receiver *RedisQueueReceiver) {
 		for !receiver.stopFlag.Load() {
@@ -120,7 +122,6 @@ func (r *RedisQueueReceiver) Run() error {
 
 			r.jobCh <- job
 		}
-		receiver.stopFlag.Store(false) // 重制标志位
 		log.Printf("[RedisQueueReceiver] loop exited")
 	}(r)
 
@@ -140,6 +141,24 @@ func (r *RedisQueueReceiver) Stop() error {
 	r.status = receiver_status.Stopped
 
 	r.stopFlag.Store(true)
+	return nil
+}
+
+func (r *RedisQueueReceiver) Shutdown() error {
+	r.lock.Lock()
+	defer r.lock.Unlock()
+
+	// 状态检查
+	err := r.checkStatus(receiver_status.Running, receiver_status.Stopped)
+	if err != nil {
+		return err
+	}
+
+	r.stopFlag.Store(true) // 停止协程
+	close(r.jobCh)         // 关掉channel防泄漏
+
+	r.status = receiver_status.Shutdown
+
 	return nil
 }
 

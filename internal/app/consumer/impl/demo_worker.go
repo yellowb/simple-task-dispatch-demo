@@ -92,19 +92,22 @@ func (d *DemoWorker) Run() error {
 	// 起一个协程，不断从父Consumer的channel获取Job执行
 	ch := d.father.GetJobExecutorPairChannel()
 	go func(worker *DemoWorker) {
+		log.Printf("[%s] worker started", worker.name)
 		for {
 			select {
 			case v, ok := <-ch:
 				{
 					if !ok {
+						// 父Consumer关闭了channel，意味着父Consumer退出了，那么Worker也可以退出了
 						ch = nil
 						log.Printf("[%s] father channel closed, worker exited", d.name)
 						break
 					}
-					d.work(v)
+					worker.work(v)
 				}
-			case <-d.ctx.Done():
-				log.Printf("[%s] work stopped", d.name)
+			case <-worker.ctx.Done():
+				// worker被Stop
+				log.Printf("[%s] worker stopped", worker.name)
 				break
 			}
 		}
@@ -127,7 +130,7 @@ func (d *DemoWorker) Stop() error {
 	// 停止worker协程
 	d.cancelFunc()
 
-	// TODO：实际上可能还需要一些清理工作，这里没有就不写
+	// TODO：实际上可能还需要一些清理工作，这里没有就不写。如果清理的逻辑复杂，要写在单独的free()方法中。
 
 	d.status = worker_status.Stopped
 	return nil

@@ -17,6 +17,8 @@ type Consumer interface {
 	Config(cfg *global.ConsumerConfig) Consumer
 	// Receiver 注入Job的接收器到Consumer
 	Receiver(receiver Receiver) Consumer
+	// TaskResultStorage 注入TaskResultStorage，用于被worker调用存储job执行结果
+	TaskResultStorage(storage TaskResultStorage) Consumer
 
 	/* 下面这些是影响Consumer运行状态的接口 */
 

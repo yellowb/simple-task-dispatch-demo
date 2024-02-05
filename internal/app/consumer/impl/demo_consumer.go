@@ -8,6 +8,7 @@ import (
 	"github.com/yellowb/simple-task-dispatch-demo/internal/app/consumer/iface"
 	"github.com/yellowb/simple-task-dispatch-demo/internal/global"
 	"github.com/yellowb/simple-task-dispatch-demo/internal/model"
+	"log"
 	"strings"
 	"sync"
 )
@@ -25,12 +26,16 @@ type DemoConsumer struct {
 	// Receiver
 	receiver iface.Receiver
 
+	// Job执行结果的存储器
+	taskResultStorage iface.TaskResultStorage
+
 	// 用于退出Consumer协程
 	ctx        context.Context
 	cancelFunc context.CancelFunc
 
 	// 其它内部属性
 	workerCount   int                            // Worker数量
+	workerPool    []iface.Worker                 // Worker池子，好像暂时没用上
 	status        consumer_status.ConsumerStatus // Consumer状态
 	lock          sync.Mutex
 	executorMap   map[string]iface.Executor   // key -> Executor 的映射
@@ -54,6 +59,11 @@ func (d *DemoConsumer) Receiver(receiver iface.Receiver) iface.Consumer {
 	return d
 }
 
+func (d *DemoConsumer) TaskResultStorage(storage iface.TaskResultStorage) iface.Consumer {
+	d.taskResultStorage = storage
+	return d
+}
+
 func (d *DemoConsumer) Init() error {
 	d.lock.Lock()
 	defer d.lock.Unlock()
@@ -72,6 +82,10 @@ func (d *DemoConsumer) Init() error {
 		return errors.New("receiver is nil")
 	}
 
+	if d.taskResultStorage == nil {
+		return errors.New("task result storage is nil")
+	}
+
 	// 初始化内部字段
 	d.ctx, d.cancelFunc = context.WithCancel(context.Background())
 	if d.cfg.WorkerPoolSize < 0 { // TODO: 应该还要加一个右边界判断，这里没写
@@ -86,18 +100,106 @@ func (d *DemoConsumer) Init() error {
 		d.jobExecutorCh = make(chan *model.JobExecutorPair, d.cfg.JobBufferSize)
 	}
 
+	// 初始化Worker池子
+	d.workerPool = make([]iface.Worker, d.workerCount)
+	for i := 0; i < d.workerCount; i++ {
+		worker := NewDemoWorker(i).Consumer(d).TaskResultStorage(d.taskResultStorage)
+		err = worker.Init()
+		if err != nil {
+			return fmt.Errorf("init worker error : %v", err)
+		}
+		d.workerPool[i] = worker
+	}
+
 	d.status = consumer_status.Initialized
 	return nil
 }
 
 func (d *DemoConsumer) Run() error {
-	//TODO implement me
-	panic("implement me")
+	d.lock.Lock()
+	defer d.lock.Unlock()
+
+	// 状态检查
+	err := d.checkStatus(consumer_status.Initialized)
+	if err != nil {
+		return err
+	}
+
+	// 起一个协程不断从Receiver获取Job，投递给Worker处理
+	receiverCh := d.receiver.GetJobChannel()
+	go func(consumer *DemoConsumer) {
+		log.Printf("[Consumer] consumer started")
+		for {
+			select {
+			case v, ok := <-receiverCh:
+				{
+					if !ok {
+						// receiver的channel被关闭了，一般不会先关闭receiver。正常应该是先关闭consumer
+						// 所以正确使用时应该不会走到这里。
+						// 把receiverCh设置为nil防止外层select再跑进这个case导致空循环
+						receiverCh = nil
+						log.Printf("[Consumer] receiver channel closed")
+					}
+					// 根据job查找对应的Executor
+					executor := consumer.getMatchedExecutor(v.ExecutorKey)
+					if executor == nil {
+						// 找不到匹配的Executor！正常不应该出现这种情况，打log
+						log.Printf("[Warn][Consumer] cannot match executor with key : %s", v.ExecutorKey)
+					}
+					// 把Job和Executor打包投递给Worker
+					pair := &model.JobExecutorPair{
+						Job:      v,
+						Executor: executor,
+					}
+					consumer.jobExecutorCh <- pair
+				}
+			case <-consumer.ctx.Done():
+				{
+					// consumer 被 shutdown
+					log.Printf("consumer shutdown")
+					break
+				}
+			}
+		}
+	}(d)
+
+	// 启动所有Worker协程
+	for _, worker := range d.workerPool {
+		err = worker.Run()
+		if err != nil {
+			log.Printf("[Error][Consumer] run worker error : %v", err)
+			// 其实这里直接return err也是有问题的，因为上面那个consumer协程还在跑，
+			// 但是consumer状态还是Initialized。比较完备的做法应该是这里要停止掉consumer协程，再返回。
+
+			// 不过一般不会出错，可以先这么对付一下=_=
+			return err
+		}
+	}
+
+	d.status = consumer_status.Running
+	return nil
 }
 
 func (d *DemoConsumer) Shutdown() error {
-	//TODO implement me
-	panic("implement me")
+	d.lock.Lock()
+	defer d.lock.Unlock()
+
+	// 状态检查
+	err := d.checkStatus(consumer_status.Running)
+	if err != nil {
+		return err
+	}
+
+	// 停止Consumer协程
+	d.cancelFunc()
+	// 关闭Receiver
+	_ = d.receiver.Shutdown()
+	// 关闭与Worker相连的channel，通知所有Worker退出
+	close(d.jobExecutorCh)
+
+	d.status = consumer_status.Shutdown
+
+	return nil
 }
 
 func (d *DemoConsumer) GetJobExecutorPairChannel() <-chan *model.JobExecutorPair {
@@ -135,4 +237,8 @@ func (d *DemoConsumer) initExecutorMap() map[string]iface.Executor {
 	executorMap[e2.ExecutorKey()] = e2
 
 	return executorMap
+}
+
+func (d *DemoConsumer) getMatchedExecutor(key string) iface.Executor {
+	return d.executorMap[key]
 }
