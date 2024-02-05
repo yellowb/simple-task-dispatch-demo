@@ -2,7 +2,6 @@ package iface
 
 import (
 	"github.com/yellowb/simple-task-dispatch-demo/internal/global"
-	"github.com/yellowb/simple-task-dispatch-demo/internal/model"
 )
 
 /**
@@ -32,5 +31,5 @@ type Consumer interface {
 	/* 下面这些是Consumer暴露给Worker使用的接口 */
 
 	// GetJobExecutorPairChannel 返回一个channel，后续Worker可以从这个channel中拿到Consumer派发的Job和对应的Executor组合
-	GetJobExecutorPairChannel() <-chan *model.JobExecutorPair
+	GetJobExecutorPairChannel() <-chan *JobExecutorPair
 }

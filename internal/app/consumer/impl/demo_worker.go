@@ -153,7 +153,7 @@ func (d *DemoWorker) checkStatus(statusList ...worker_status.WorkerStatus) error
 }
 
 // 包装一个方法用于worker协程执行executor逻辑，把通用的前置和后置逻辑抽到这个方法中
-func (d *DemoWorker) work(pair *model.JobExecutorPair) {
+func (d *DemoWorker) work(pair *iface.JobExecutorPair) {
 	job := pair.Job
 	executor := pair.Executor
 

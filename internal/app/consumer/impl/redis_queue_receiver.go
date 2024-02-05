@@ -74,6 +74,7 @@ func (r *RedisQueueReceiver) Init() error {
 	if err != nil {
 		return fmt.Errorf("init redis client error : %v", err)
 	}
+	r.redisCli = cli
 
 	// init job channel
 	jobChLen := r.cfg.JobBufferSize
@@ -105,11 +106,13 @@ func (r *RedisQueueReceiver) Run() error {
 		for !receiver.stopFlag.Load() {
 			v, err := receiver.redisCli.BRPop(context.Background(), defaultRedisPopTimeout, receiver.queueName).Result()
 			if err != nil {
-				// redis.Nil不用管
 				if !errors.Is(err, redis.Nil) {
 					// 遇到错误了，等一会再试试
 					log.Printf("[ERROR] pop message from redis error : %v", err)
 					time.Sleep(time.Second)
+				} else {
+					// redis.Nil表示redis中这个List为空，读不出东西，不断循环BRPop就行
+					continue
 				}
 			}
 

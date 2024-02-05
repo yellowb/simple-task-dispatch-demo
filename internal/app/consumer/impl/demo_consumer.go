@@ -7,7 +7,6 @@ import (
 	"github.com/yellowb/simple-task-dispatch-demo/internal/app/consumer/consumer_status"
 	"github.com/yellowb/simple-task-dispatch-demo/internal/app/consumer/iface"
 	"github.com/yellowb/simple-task-dispatch-demo/internal/global"
-	"github.com/yellowb/simple-task-dispatch-demo/internal/model"
 	"log"
 	"strings"
 	"sync"
@@ -39,7 +38,7 @@ type DemoConsumer struct {
 	status        consumer_status.ConsumerStatus // Consumer状态
 	lock          sync.Mutex
 	executorMap   map[string]iface.Executor   // key -> Executor 的映射
-	jobExecutorCh chan *model.JobExecutorPair // 用于往Worker投递消息的Channel
+	jobExecutorCh chan *iface.JobExecutorPair // 用于往Worker投递消息的Channel
 }
 
 func NewDemoConsumer() *DemoConsumer {
@@ -81,6 +80,7 @@ func (d *DemoConsumer) Init() error {
 	if d.receiver == nil {
 		return errors.New("receiver is nil")
 	}
+	// TODO: 其实还要检查Receiver的状态是否已经在运行，这里没写
 
 	if d.taskResultStorage == nil {
 		return errors.New("task result storage is nil")
@@ -93,11 +93,11 @@ func (d *DemoConsumer) Init() error {
 	} else {
 		d.workerCount = d.cfg.WorkerPoolSize
 	}
-	d.executorMap = d.initExecutorMap()
+	d.initExecutorMap()
 	if d.cfg.JobBufferSize < 0 { // TODO: 应该还要加一个右边界判断，这里没写
-		d.jobExecutorCh = make(chan *model.JobExecutorPair, defaultChanSize)
+		d.jobExecutorCh = make(chan *iface.JobExecutorPair, defaultChanSize)
 	} else {
-		d.jobExecutorCh = make(chan *model.JobExecutorPair, d.cfg.JobBufferSize)
+		d.jobExecutorCh = make(chan *iface.JobExecutorPair, d.cfg.JobBufferSize)
 	}
 
 	// 初始化Worker池子
@@ -147,7 +147,7 @@ func (d *DemoConsumer) Run() error {
 						log.Printf("[Warn][Consumer] cannot match executor with key : %s", v.ExecutorKey)
 					}
 					// 把Job和Executor打包投递给Worker
-					pair := &model.JobExecutorPair{
+					pair := &iface.JobExecutorPair{
 						Job:      v,
 						Executor: executor,
 					}
@@ -202,7 +202,7 @@ func (d *DemoConsumer) Shutdown() error {
 	return nil
 }
 
-func (d *DemoConsumer) GetJobExecutorPairChannel() <-chan *model.JobExecutorPair {
+func (d *DemoConsumer) GetJobExecutorPairChannel() <-chan *iface.JobExecutorPair {
 	return d.jobExecutorCh
 }
 
@@ -223,7 +223,7 @@ func (d *DemoConsumer) checkStatus(statusList ...consumer_status.ConsumerStatus)
 }
 
 // 初始化 key -> Executor 的映射
-func (d *DemoConsumer) initExecutorMap() map[string]iface.Executor {
+func (d *DemoConsumer) initExecutorMap() {
 	// TODO: 正式的代码可以把这个映射表做成全局单例，初始化的地方也不要在Consumer中，
 	// TODO: Consumer直接引用这个全局单例即可
 
@@ -233,10 +233,10 @@ func (d *DemoConsumer) initExecutorMap() map[string]iface.Executor {
 	e1 := new(FakeExecutorA)
 	executorMap[e1.ExecutorKey()] = e1
 
-	e2 := new(FakeExecutorA)
+	e2 := new(FakeExecutorB)
 	executorMap[e2.ExecutorKey()] = e2
 
-	return executorMap
+	d.executorMap = executorMap
 }
 
 func (d *DemoConsumer) getMatchedExecutor(key string) iface.Executor {

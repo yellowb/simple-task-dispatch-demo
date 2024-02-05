@@ -302,6 +302,6 @@ func (d *DemoDispatcher) taskFunc(task *model2.Task) func() {
 		if err != nil {
 			log.Printf("deliver job error : %v", err)
 		}
-		log.Printf("delivered job : [%s]", task.Key)
+		log.Printf("delivered job : [%s][%s]", job.ExecutorKey, job.JobUid)
 	}
 }

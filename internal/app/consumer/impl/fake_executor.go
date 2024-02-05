@@ -30,14 +30,14 @@ func (f *FakeExecutorA) Execute(job *model.Job) (*model.JobExecResult, error) {
 	}, nil
 }
 
-type FakeHandlerB struct {
+type FakeExecutorB struct {
 }
 
-func (f *FakeHandlerB) ExecutorKey() string {
+func (f *FakeExecutorB) ExecutorKey() string {
 	return "task-b"
 }
 
-func (f *FakeHandlerB) Execute(job *model.Job) (*model.JobExecResult, error) {
+func (f *FakeExecutorB) Execute(job *model.Job) (*model.JobExecResult, error) {
 	time.Sleep(3 * time.Second)
 	return &model.JobExecResult{
 		Succeed: true,
