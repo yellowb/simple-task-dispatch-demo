@@ -1,18 +1,17 @@
-package initialize
+package global
 
 import (
 	"context"
 	"fmt"
 	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
-	"github.com/yellowb/simple-task-dispatch-demo/internal/global"
 	"log"
 )
 
 var redisCli *redis.Client
 var redisInitErr error
 
-func RedisInit(redisCfg global.RedisCfg) {
+func RedisInit(redisCfg RedisCfg) {
 	// 创建Redis连接
 	redisClient := redis.NewClient(&redis.Options{
 		Addr:     fmt.Sprintf("%s:%s", redisCfg.Addr, redisCfg.Port),
@@ -30,9 +29,6 @@ func RedisInit(redisCfg global.RedisCfg) {
 }
 
 func GetRedisCli() *redis.Client {
-	if redisCli == nil {
-
-	}
 	if redisInitErr != nil {
 		return nil
 	}

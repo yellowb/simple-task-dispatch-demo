@@ -10,7 +10,6 @@ import (
 	"github.com/yellowb/simple-task-dispatch-demo/internal/app/consumer/iface"
 	"github.com/yellowb/simple-task-dispatch-demo/internal/app/consumer/status"
 	"github.com/yellowb/simple-task-dispatch-demo/internal/global"
-	"github.com/yellowb/simple-task-dispatch-demo/internal/global/initialize"
 	"github.com/yellowb/simple-task-dispatch-demo/internal/model"
 	"sync"
 	"sync/atomic"
@@ -74,7 +73,7 @@ func (r *RedisReceiver) Init() error {
 	if r.cfg == nil {
 		return errors.New("cfg is nil")
 	}
-	r.redisCli = initialize.GetRedisCli()
+	r.redisCli = global.GetRedisCli()
 	if r.redisCli == nil {
 		return errors.New("redis client is nil, connect error")
 	}

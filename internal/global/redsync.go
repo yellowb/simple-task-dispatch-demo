@@ -1,4 +1,4 @@
-package initialize
+package global
 
 import (
 	"github.com/go-redsync/redsync/v4"

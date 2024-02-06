@@ -24,7 +24,10 @@ func main() {
 		QueueName:   "mq",
 		JobChanSize: 100,
 	}
-	//initialize.NewRedisClient(receiverCfg.RedisCfg)
+
+	global.RedisInit(receiverCfg.RedisCfg)
+	global.RedSyncLockInit()
+
 	receiver := impl.NewRedisQueueReceiver()
 	receiver.Config(receiverCfg)
 	_ = receiver.Init()
