@@ -3,9 +3,11 @@ package impl
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/sirupsen/logrus"
 	"github.com/yellowb/simple-task-dispatch-demo/internal/app/consumer/iface"
 	"github.com/yellowb/simple-task-dispatch-demo/internal/app/consumer/status"
+	"github.com/yellowb/simple-task-dispatch-demo/internal/global"
 	"github.com/yellowb/simple-task-dispatch-demo/internal/model"
 	"runtime"
 	"sync"
@@ -106,7 +108,16 @@ func (d *DemoWorker) Shutdown() error {
 }
 
 func (d *DemoWorker) processJob(jobExecutor *iface.JobExecutor) {
+	//获取该任务的分布式锁
+	lockName := fmt.Sprintf("lock:%s", jobExecutor.TaskKey)
+	taskMutex := global.CreateLock(lockName, 3*time.Second, 3)
+	err := taskMutex.Lock()
+	if err != nil {
+		fmt.Println("任务获取锁出错：", err)
+		return
+	}
 	defer func() {
+		taskMutex.Unlock()
 		if r := recover(); r != nil {
 			const size = 64 << 10
 			buf := make([]byte, size)
@@ -114,8 +125,8 @@ func (d *DemoWorker) processJob(jobExecutor *iface.JobExecutor) {
 			logrus.Errorf("running job = %v panic: %v\n%s", jobExecutor.Job, r, buf)
 		}
 	}()
-	//todo 获取该任务的分布式锁
-
+	// 模拟任务执行耗时
+	time.Sleep(10 * time.Second)
 	jobRecord := &model.JobRecord{
 		StartTime:  time.Now(),
 		StartDelay: time.Now().Unix() - jobExecutor.DispatchedTime,
